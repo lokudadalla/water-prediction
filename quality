@@ -1,0 +1,372 @@
+Water prediction code explanation
+
+>first we import numpy and pandas library to it.
+
+>seaborn in python is a library for making statical graphs in python. it helps to explore and understand the data.
+
+>matplotlib inline use to get the plot into notebook
+
+>there are no correlation between any other two ph,sulfate etc. methods. so we dont want to reduce dimention to this dataset. 
+
+>Removing null data in datasets, as mentioned in your PDF, is often a crucial step in data preprocessing, particularly in the context of predictive modeling and analysis like water quality prediction. Here are the key reasons for this practice: 
+
+          Accuracy of Analysis: Null values can skew the results of statistical analyses and predictive modeling, leading to inaccurate conclusions. By removing or appropriately handling null data, you ensure that the analysis is based on reliable and complete information. 
+
+          Algorithm Requirements: Many machine learning algorithms cannot handle null or missing values and require complete datasets to function correctly. Removing null values makes the dataset compatible with a broader range of algorithms. 
+
+          Data Integrity: Null values might indicate issues with data collection or processing. Removing or addressing these values helps maintain the integrity of the dataset, ensuring that subsequent analyses are based on high-quality data.
+
+          Improved Model Performance: Models trained on datasets with null values often perform worse than those trained on clean, complete datasets. Removing null values can lead to more accurate and reliable predictive models. 
+
+          Consistency in Data: Ensuring that all entries in the dataset are non-null can lead to more consistent and reliable data, which is crucial for trend analysis and predictive modeling.
+
+>df['ph'] = df['ph'].fillna(df['ph'].mean()):
+          This line replaces all null values in the 'ph' column with the mean of the 'ph' column. df['ph'].mean() calculates the average value of the 'ph' column, and fillna() is then used to fill in the null values with this mean.
+
+>Standardizing the data with a method like StandardScaler in scikit-learn does change the scale and distribution of the dataset, but it does not change the intrinsic structure or relationships within the data. Here’s what happens when you standardize a dataset: 
+
+          Scale Change: Standardization transforms the data so that it has a mean of 0 and a standard deviation of 1. This process changes the scale of the features but doesn't alter the shape of their distribution. 
+
+          Preservation of Relationships: The relative distances between data points and the overall distribution shape are preserved. This means that while the scale of the data changes, the relationships among the data points (like correlation or relative spacing) remain the same. 
+
+          Data Interpretation: After standardization, the data points are expressed in terms of standard deviations from the mean. A value of 0 represents the mean of the dataset, positive values are above the mean, and negative values are below the mean. 
+
+          Effect on Analysis: Standardization is beneficial for many machine learning algorithms, particularly those that rely on distance calculations (like k-nearest neighbors or SVM) or optimization techniques sensitive to feature scaling. While the raw values of the data change, the standardized data is more suitable for these algorithms, leading to potentially better performance and more reliable results.
+
+>from sklearn.preprocessing import StandardScaler: This imports the StandardScaler class from the sklearn.preprocessing module of scikit-learn, a popular machine learning library in Python.
+
+          scaler = StandardScaler(): An instance of StandardScaler is created and assigned to the variable scaler. This object will be used to perform the standardization. 
+
+
+X = scaler.fit_transform(X): This line applies the fit_transform method of the scaler object to the data X. 
+fit_transform does two things: first, it calculates the mean and standard deviation of each feature in the dataset X (this is the fit part); then, it uses these statistics to scale each feature so that it has a mean of 0 and a standard deviation of 1 (the transform part). 
+After this operation, X is overwritten with its standardized version, where each feature in X now has a mean of approximately 0 and a standard deviation of approximately 1
+
+
+> Data Preparation: Your X_train, X_test, y_train, and y_test should be properly defined and pre-processed (normalized, if necessary, and split into training and testing sets).
+
+          Model Training: The fit method is used to train the logistic regression model on your training data.
+
+          Prediction: After training, you use the prediction method to make predictions on your test dataset.
+
+          Evaluation: Finally, you evaluate the model by calculating the accuracy and can also look at the confusion matrix and classification report for a more detailed performance analysis.
+
+> Similarly, the other algorithm checks the accuracy and the factors that go with it and selects the model with the highest accuracy, and makes the prediction here.
+so we use Logistic Regression, Decision tree, Random Forest, XG Boost, ADA Boost, SVM, KNeighbour models to predict which model do it best. according to the results we can see that the SVM model is the best method to do this water prediction.
+
+
+
+
+# IMPORTANT: RUN THIS CELL IN ORDER TO IMPORT YOUR KAGGLE DATA SOURCES
+# TO THE CORRECT LOCATION (/kaggle/input) IN YOUR NOTEBOOK,
+# THEN FEEL FREE TO DELETE THIS CELL.
+# NOTE: THIS NOTEBOOK ENVIRONMENT DIFFERS FROM KAGGLE'S PYTHON
+# ENVIRONMENT SO THERE MAY BE MISSING LIBRARIES USED BY YOUR
+# NOTEBOOK.
+
+import os
+import sys
+from tempfile import NamedTemporaryFile
+from urllib.request import urlopen
+from urllib.parse import unquote, urlparse
+from urllib.error import HTTPError
+from zipfile import ZipFile
+import tarfile
+import shutil
+
+CHUNK_SIZE = 40960
+DATA_SOURCE_MAPPING = 'water-potability:https%3A%2F%2Fstorage.googleapis.com%2Fkaggle-data-sets%2F1292407%2F2157486%2Fbundle%2Farchive.zip%3FX-Goog-Algorithm%3DGOOG4-RSA-SHA256%26X-Goog-Credential%3Dgcp-kaggle-com%2540kaggle-161607.iam.gserviceaccount.com%252F20240411%252Fauto%252Fstorage%252Fgoog4_request%26X-Goog-Date%3D20240411T212335Z%26X-Goog-Expires%3D259200%26X-Goog-SignedHeaders%3Dhost%26X-Goog-Signature%3Da001c522024203a12867b5d61da290dcb410bdd4576f4704e587d38f77389fa11914305b80b36b8a7dea0d9ab9fad2e77270ae9200d2217cf5082643639d93dc24c87399957fcd346ab7f4cfc85cc871ac9a0706b7f399e834fa4574d4ed7e26f1d38c0d28ca9f0cc9f5297ecf29733827158bac275e746c73b2ef8fff9965fef400d0a5fff530d017b9290048345692ca9351fb64ea8ac3896f65019353492099343d8f63535e0719d0515f89ad75fa1205dfc8b8bc9b0c26576d5c0f7fddcc90805cf2d2adeebb44ebbf688edd3868e08cb5bd8a0097355d28a3a9d744a56970ad3179f67b050a190be4b32949b491656c44c274ebdbadca7e607399ef89a7'
+
+KAGGLE_INPUT_PATH='/kaggle/input'
+KAGGLE_WORKING_PATH='/kaggle/working'
+KAGGLE_SYMLINK='kaggle'
+
+!umount /kaggle/input/ 2> /dev/null
+shutil.rmtree('/kaggle/input', ignore_errors=True)
+os.makedirs(KAGGLE_INPUT_PATH, 0o777, exist_ok=True)
+os.makedirs(KAGGLE_WORKING_PATH, 0o777, exist_ok=True)
+
+try:
+  os.symlink(KAGGLE_INPUT_PATH, os.path.join("..", 'input'), target_is_directory=True)
+except FileExistsError:
+  pass
+try:
+  os.symlink(KAGGLE_WORKING_PATH, os.path.join("..", 'working'), target_is_directory=True)
+except FileExistsError:
+  pass
+
+for data_source_mapping in DATA_SOURCE_MAPPING.split(','):
+    directory, download_url_encoded = data_source_mapping.split(':')
+    download_url = unquote(download_url_encoded)
+    filename = urlparse(download_url).path
+    destination_path = os.path.join(KAGGLE_INPUT_PATH, directory)
+    try:
+        with urlopen(download_url) as fileres, NamedTemporaryFile() as tfile:
+            total_length = fileres.headers['content-length']
+            print(f'Downloading {directory}, {total_length} bytes compressed')
+            dl = 0
+            data = fileres.read(CHUNK_SIZE)
+            while len(data) > 0:
+                dl += len(data)
+                tfile.write(data)
+                done = int(50 * dl / int(total_length))
+                sys.stdout.write(f"\r[{'=' * done}{' ' * (50-done)}] {dl} bytes downloaded")
+                sys.stdout.flush()
+                data = fileres.read(CHUNK_SIZE)
+            if filename.endswith('.zip'):
+              with ZipFile(tfile) as zfile:
+                zfile.extractall(destination_path)
+            else:
+              with tarfile.open(tfile.name) as tarfile:
+                tarfile.extractall(destination_path)
+            print(f'\nDownloaded and uncompressed: {directory}')
+    except HTTPError as e:
+        print(f'Failed to load (likely expired) {download_url} to path {destination_path}')
+        continue
+    except OSError as e:
+        print(f'Failed to load {download_url} to path {destination_path}')
+        continue
+
+print('Data source import complete.')
+
+
+# This Python 3 environment comes with many helpful analytics libraries installed
+# It is defined by the kaggle/python Docker image: https://github.com/kaggle/docker-python
+# For example, here's several helpful packages to load
+
+import numpy as np # linear algebra
+import pandas as pd # data processing, CSV file I/O (e.g. pd.read_csv)
+
+# Input data files are available in the read-only "../input/" directory
+# For example, running this (by clicking run or pressing Shift+Enter) will list all files under the input directory
+
+import os
+for dirname, _, filenames in os.walk('/kaggle/input'):
+    for filename in filenames:
+        print(os.path.join(dirname, filename))
+
+
+
+
+
+main_df = pd.read_csv("/kaggle/input/water-potability/water_potability.csv")
+df = main_df.copy()
+# Getting top 5 row of the dataset
+
+df.head()
+import numpy as np
+import pandas as pd
+import seaborn as sns
+import matplotlib.pyplot as plt
+%matplotlib inline
+import plotly.express as px
+import warnings
+warnings.filterwarnings('ignore')
+### Following are the list of algorithms that are used in this notebook.
+
+|    Algorithm         | 
+| -------------------- | 
+| Logistic Regression  |
+| Decision Tree|
+| Random Forest|
+| XGBoost|
+| KNeighbours|
+| SVM|
+| AdaBoost|
+print(df.shape)
+print(df.columns)
+df.describe()
+df.info()
+print(df.nunique())
+print(df.isnull().sum())
+df.dtypes
+sns.heatmap(df.isnull())
+plt.figure(figsize=(10, 8))
+sns.heatmap(df.corr(), annot= True, cmap='coolwarm')
+# Unstacking the correlation matrix to see the values more clearly.
+corr = df.corr()
+c1 = corr.abs().unstack()
+c1.sort_values(ascending = False)[12:24:2]
+ax = sns.countplot(x = "Potability",data= df, saturation=0.8)
+plt.xticks(ticks=[0, 1], labels = ["Not Potable", "Potable"])
+plt.show()
+x = df.Potability.value_counts()
+labels = [0,1]
+print(x)
+sns.violinplot(x='Potability', y='ph', data=df, palette='rocket')
+# Visualizing dataset and also checking for outliers 
+
+fig, ax = plt.subplots(ncols = 5, nrows = 2, figsize = (20, 10))
+index = 0
+ax = ax.flatten()
+
+for col, value in df.items():
+    sns.boxplot(y=col, data=df, ax=ax[index])
+    index += 1
+plt.tight_layout(pad = 0.5, w_pad=0.7, h_pad=5.0)
+plt.rcParams['figure.figsize'] = [20,10]
+df.hist()
+plt.show()
+sns.pairplot(df, hue="Potability")
+plt.rcParams['figure.figsize'] = [7,5]
+sns.distplot(df['Potability'])
+df.hist(column='ph', by='Potability')
+df.hist(column='Hardness', by='Potability')
+# Individual box plot for each feature
+def Box(df):
+    plt.title("Box Plot")
+    sns.boxplot(df)
+    plt.show()
+Box(df['ph'])
+sns.histplot(x = "Hardness", data=df)
+df.nunique()
+skew_val = df.skew().sort_values(ascending=False)
+skew_val
+* Using pandas skew function to check the correlation between the values.
+* Values between 0.5 to  -0.5 will be considered as the normal distribution else will be skewed depending upon the skewness value.
+fig = px.box(df, x="Potability", y="ph", color="Potability", width=800, height=400)
+fig.show()
+fig = px.box(df, x="Potability", y="Hardness", color="Potability", width=800, height=400)
+fig.show()
+fig = px.histogram (df, x = "Sulfate",  facet_row = "Potability",  template = 'plotly_dark')
+fig.show ()
+fig = px.histogram (df, x = "Trihalomethanes",  facet_row = "Potability",  template = 'plotly_dark')
+fig.show ()
+fig =  px.pie (df, names = "Potability", hole = 0.4, template = "plotly_dark")
+fig.show ()
+fig = px.scatter (df, x = "ph", y = "Sulfate", color = "Potability", template = "plotly_dark",  trendline="ols")
+fig.show ()
+fig = px.scatter (df, x = "Organic_carbon", y = "Hardness", color = "Potability", template = "plotly_dark",  trendline="lowess")
+fig.show ()
+df.isnull().mean().plot.bar(figsize=(10,6)) 
+plt.ylabel('Percentage of missing values') 
+plt.xlabel('Features') 
+plt.title('Missing Data in Percentages');
+df['ph'] = df['ph'].fillna(df['ph'].mean())
+df['Sulfate'] = df['Sulfate'].fillna(df['Sulfate'].mean())
+df['Trihalomethanes'] = df['Trihalomethanes'].fillna(df['Trihalomethanes'].mean())
+df.head()
+sns.heatmap(df.isnull())
+df.isnull().sum()
+X = df.drop('Potability', axis=1)
+y = df['Potability']
+X.shape, y.shape
+# import StandardScaler to perform scaling
+from sklearn.preprocessing import StandardScaler 
+scaler = StandardScaler()
+X = scaler.fit_transform(X)
+X
+# import train-test split 
+from sklearn.model_selection import train_test_split
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.33, random_state=42)
+## Using Logistic Regression
+from sklearn.linear_model import LogisticRegression
+from sklearn.metrics import confusion_matrix, accuracy_score, classification_report
+# Creating model object
+model_lg = LogisticRegression(max_iter=120,random_state=0, n_jobs=20)
+# Training Model
+model_lg.fit(X_train, y_train)
+# Making Prediction
+pred_lg = model_lg.predict(X_test)
+# Calculating Accuracy Score
+lg = accuracy_score(y_test, pred_lg)
+print(lg)
+print(classification_report(y_test,pred_lg))
+# confusion Maxtrix
+cm1 = confusion_matrix(y_test, pred_lg)
+sns.heatmap(cm1/np.sum(cm1), annot = True, fmt=  '0.2%', cmap = 'Reds')
+## Using Decision Tree Classifier
+from sklearn.tree import DecisionTreeClassifier
+# Creating model object
+model_dt = DecisionTreeClassifier( max_depth=4, random_state=42)
+# Training Model
+model_dt.fit(X_train,y_train)
+# Making Prediction
+pred_dt = model_dt.predict(X_test)
+# Calculating Accuracy Score
+dt = accuracy_score(y_test, pred_dt)
+print(dt)
+print(classification_report(y_test,pred_dt))
+# confusion Maxtrix
+cm2 = confusion_matrix(y_test, pred_dt)
+sns.heatmap(cm2/np.sum(cm2), annot = True, fmt=  '0.2%', cmap = 'Reds')
+## Using Random Forest 
+from sklearn.ensemble import RandomForestClassifier
+# Creating model object
+model_rf = RandomForestClassifier(n_estimators=300,min_samples_leaf=0.16, random_state=42)
+# Training Model
+model_rf.fit(X_train, y_train)
+# Making Prediction
+pred_rf = model_rf.predict(X_test)
+# Calculating Accuracy Score
+rf = accuracy_score(y_test, pred_rf)
+print(rf)
+print(classification_report(y_test,pred_rf))
+# confusion Maxtrix
+cm3 = confusion_matrix(y_test, pred_rf)
+sns.heatmap(cm3/np.sum(cm3), annot = True, fmt=  '0.2%', cmap = 'Reds')
+## Using XGBoost Classifier
+from xgboost import XGBClassifier
+# Creating model object
+model_xgb = XGBClassifier(max_depth= 8, n_estimators= 125, random_state= 0,  learning_rate= 0.03, n_jobs=5)
+# Training Model
+model_xgb.fit(X_train, y_train)
+# Making Prediction
+pred_xgb = model_xgb.predict(X_test)
+# Calculating Accuracy Score
+xgb = accuracy_score(y_test, pred_xgb)
+print(xgb)
+print(classification_report(y_test,pred_xgb))
+# confusion Maxtrix
+cm4 = confusion_matrix(y_test, pred_xgb)
+sns.heatmap(cm4/np.sum(cm4), annot = True, fmt=  '0.2%', cmap = 'Reds')
+## Using KNeighbours
+from sklearn.neighbors import KNeighborsClassifier
+# Creating model object
+model_kn = KNeighborsClassifier(n_neighbors=9, leaf_size=20)
+# Training Model
+model_kn.fit(X_train, y_train)
+# Making Prediction
+pred_kn = model_kn.predict(X_test)
+# Calculating Accuracy Score
+kn = accuracy_score(y_test, pred_kn)
+print(kn)
+print(classification_report(y_test,pred_kn))
+# confusion Maxtrix
+cm5 = confusion_matrix(y_test, pred_kn)
+sns.heatmap(cm5/np.sum(cm5), annot = True, fmt=  '0.2%', cmap = 'Reds')
+## Using SVM
+from sklearn.svm import SVC, LinearSVC
+model_svm = SVC(kernel='rbf', random_state = 42)
+model_svm.fit(X_train, y_train)
+# Making Prediction
+pred_svm = model_svm.predict(X_test)
+# Calculating Accuracy Score
+sv = accuracy_score(y_test, pred_svm)
+print(sv)
+print(classification_report(y_test,pred_kn))
+# confusion Maxtrix
+cm6 = confusion_matrix(y_test, pred_svm)
+sns.heatmap(cm6/np.sum(cm6), annot = True, fmt=  '0.2%', cmap = 'Reds')
+## Using AdaBoost Classifier
+from sklearn.ensemble import AdaBoostClassifier
+model_ada = AdaBoostClassifier(learning_rate= 0.002,n_estimators= 205,random_state=42)
+model_ada.fit(X_train, y_train)
+# Making Prediction
+pred_ada = model_ada.predict(X_test)
+# Calculating Accuracy Score
+ada = accuracy_score(y_test, pred_ada)
+print(ada)
+print(classification_report(y_test,pred_ada))
+# confusion Maxtrix
+cm7 = confusion_matrix(y_test, pred_ada)
+sns.heatmap(cm7/np.sum(cm7), annot = True, fmt=  '0.2%', cmap = 'Reds')
+models = pd.DataFrame({
+    'Model':['Logistic Regression', 'Decision Tree', 'Random Forest', 'XGBoost', 'KNeighbours', 'SVM', 'AdaBoost'],
+    'Accuracy_score' :[lg, dt, rf, xgb, kn, sv, ada]
+})
+models
+sns.barplot(x='Accuracy_score', y='Model', data=models)
+
+models.sort_values(by='Accuracy_score', ascending=False)
+#### Conclusion :- Here SVM classifier has achieved highest accuracy.
